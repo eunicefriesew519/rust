@@ -1,7 +1,7 @@
 use rustc_hir::def::CtorOf;
 use rustc_index::Idx;
 
-use crate::rmeta::decoder::{MetaBlob, Metadata};
+use crate::rmeta::decoder::MetaBlob;
 use crate::rmeta::encoder::ContextEncoder;
 use crate::rmeta::*;
 

@@ -11,7 +11,7 @@ use std::sync::Arc;
 use rustc_data_structures::fx::{FxIndexMap, FxIndexSet};
 use rustc_data_structures::memmap::{Mmap, MmapMut};
 use rustc_data_structures::owned_slice::slice_owned;
-use rustc_data_structures::stable_hasher::{HashStable, StableHasher};
+use rustc_data_structures::stable_hasher::{StableHash, StableHasher};
 use rustc_data_structures::sync::{par_for_each_in, par_join};
 use rustc_data_structures::temp_dir::MaybeTempDir;
 use rustc_data_structures::thousands::usize_with_underscores;
@@ -96,7 +96,7 @@ macro_rules! context_encoder_methods {
     ($($name:ident($ty:ty);)*) => {
         #[inline]
         $(fn $name(&mut self, value: $ty) {
-            //value.hash_stable(&mut self.hcx, &mut self.stable_hasher);
+            //value.stable_hash(&mut self.hcx, &mut self.stable_hasher);
             self.opaque.$name(value)
         })*
     }
@@ -129,7 +129,7 @@ impl<'a> ContextEncoder<'a> {
 
     #[inline]
     pub(super) fn write_m_with<const N: usize>(&mut self, b: &[u8; N], m: usize) {
-        //(b[..m]).hash_stable(&mut self.hcx, &mut self.stable_hasher);
+        //(b[..m]).stable_hash(&mut self.hcx, &mut self.stable_hasher);
         self.opaque.write_with(|dest| {
             *dest = *b;
             m
@@ -775,7 +775,7 @@ impl<'a, 'tcx> EncodeContext<'a, 'tcx> {
             /*tcx.sess
             .opts
             .dep_tracking_hash(true)
-            .hash_stable(&mut self.encoder.hcx, &mut self.encoder.stable_hasher)*/
+            .stable_hash(&mut self.encoder.hcx, &mut self.encoder.stable_hasher)*/
             let new_hash = Svh::new(self.encoder.opaque.hash());
 
             /*eprintln!("crate: {:?}", tcx.crate_name(LOCAL_CRATE));
@@ -2667,7 +2667,7 @@ fn with_encode_metadata_header(
 ) {
     tcx.with_stable_hashing_context(|mut hcx| {
         let mut stable_hasher = StableHasher::new();
-        tcx.sess.opts.dep_tracking_hash(true).hash_stable(&mut hcx, &mut stable_hasher);
+        tcx.sess.opts.dep_tracking_hash(true).stable_hash(&mut hcx, &mut stable_hasher);
         let mut encoder = opaque::FileEncoder::new(path, hcx, &mut stable_hasher)
             .unwrap_or_else(|err| tcx.dcx().emit_fatal(FailCreateFileEncoder { err }));
         encoder.emit_raw_bytes(METADATA_HEADER);
