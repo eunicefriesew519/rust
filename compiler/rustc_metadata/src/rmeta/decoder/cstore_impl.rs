@@ -771,7 +771,7 @@ pub(super) fn crate_hash(tcx: TyCtxt<'_>) -> Svh {
     let krate = tcx.hir_crate(());
     let hir_body_hash = krate.opt_hir_hash.expect("HIR hash missing while computing crate hash");
 
-    let upstream_crates = upstream_crates(tcx);
+    let upstream_crates = tcx.crates(()); //upstream_crates(tcx);
 
     // let resolutions = tcx.resolutions(());
 
@@ -811,7 +811,7 @@ pub(super) fn crate_hash(tcx: TyCtxt<'_>) -> Svh {
         upstream_crates.stable_hash(&mut hcx, &mut stable_hasher);
         //source_file_names.stable_hash(&mut hcx, &mut stable_hasher);
         //debugger_visualizers.stable_hash(&mut hcx, &mut stable_hasher);
-        if tcx.sess.opts.incremental.is_some() {
+        /*if tcx.sess.opts.incremental.is_some() {
             let definitions = tcx.untracked().definitions.freeze();
             let mut owner_spans: Vec<_> = tcx
                 .hir_crate_items(())
@@ -825,7 +825,7 @@ pub(super) fn crate_hash(tcx: TyCtxt<'_>) -> Svh {
                 .collect();
             owner_spans.sort_unstable_by_key(|bn| bn.0);
             owner_spans.stable_hash(&mut hcx, &mut stable_hasher);
-        }
+        }*/
         tcx.sess.opts.dep_tracking_hash(true).stable_hash(&mut hcx, &mut stable_hasher);
         tcx.stable_crate_id(LOCAL_CRATE).stable_hash(&mut hcx, &mut stable_hasher);
         // Hash visibility information since it does not appear in HIR.
@@ -842,7 +842,7 @@ pub(super) fn crate_hash(tcx: TyCtxt<'_>) -> Svh {
     Svh::new(crate_hash)
 }
 
-fn upstream_crates(tcx: TyCtxt<'_>) -> Vec<(StableCrateId, Svh)> {
+/*fn upstream_crates(tcx: TyCtxt<'_>) -> Vec<(StableCrateId, Svh)> {
     let mut upstream_crates: Vec<_> = tcx
         .crates(())
         .iter()
@@ -854,4 +854,4 @@ fn upstream_crates(tcx: TyCtxt<'_>) -> Vec<(StableCrateId, Svh)> {
         .collect();
     upstream_crates.sort_unstable_by_key(|&(stable_crate_id, _)| stable_crate_id);
     upstream_crates
-}
+}*/

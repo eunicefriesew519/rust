@@ -45,7 +45,7 @@ use rustc_attr_parsing::{AttributeParser, OmitDoc, Recovery, ShouldEmit};
 use rustc_data_structures::fingerprint::Fingerprint;
 use rustc_data_structures::fx::FxIndexSet;
 use rustc_data_structures::sorted_map::SortedMap;
-use rustc_data_structures::stable_hasher::{StableHash, StableHasher};
+//use rustc_data_structures::stable_hasher::{StableHash, StableHasher};
 use rustc_data_structures::steal::Steal;
 use rustc_data_structures::tagged_ptr::TaggedRef;
 use rustc_errors::{DiagArgFromDisplay, DiagCtxtHandle};
@@ -510,21 +510,16 @@ fn compute_hir_hash(
     tcx: TyCtxt<'_>,
     owners: &IndexSlice<LocalDefId, hir::MaybeOwner<'_>>,
 ) -> Fingerprint {
-    let mut hir_body_nodes: Vec<_> = owners
+    owners
         .iter_enumerated()
         .filter_map(|(def_id, info)| {
             let info = info.as_owner()?;
-            let def_path_hash = tcx.hir_def_path_hash(def_id);
-            Some((def_path_hash, info))
+            let dph = tcx.hir_def_path_hash(def_id).0;
+            let info_finger = info.fingerprint();
+            Some(dph.combine(info_finger))
         })
-        .collect();
-    hir_body_nodes.sort_unstable_by_key(|bn| bn.0);
-
-    tcx.with_stable_hashing_context(|mut hcx| {
-        let mut stable_hasher = StableHasher::new();
-        hir_body_nodes.stable_hash(&mut hcx, &mut stable_hasher);
-        stable_hasher.finish()
-    })
+        .reduce(Fingerprint::combine_commutative)
+        .expect("HIR hash requested without any content")
 }
 
 pub fn lower_to_hir(tcx: TyCtxt<'_>, (): ()) -> mid_hir::Crate<'_> {
