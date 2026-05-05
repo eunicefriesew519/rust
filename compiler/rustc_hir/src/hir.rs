@@ -1645,6 +1645,16 @@ impl<'tcx> OwnerInfo<'tcx> {
     pub fn node(&self) -> OwnerNode<'tcx> {
         self.nodes.node()
     }
+
+    #[inline]
+    pub fn fingerprint(&self) -> Fingerprint {
+        let body = self
+            .nodes
+            .opt_hash_including_bodies
+            .expect("HIR hash requested without needs_hir_hash");
+        let attrs = self.attrs.opt_hash.expect("HIR hash requested without needs_hir_hash");
+        body.combine(attrs)
+    }
 }
 
 #[derive(Copy, Clone, Debug, StableHash)]
